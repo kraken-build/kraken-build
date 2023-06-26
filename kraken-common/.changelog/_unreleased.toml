@@ -4,3 +4,10 @@ type = "feature"
 description = "Add `kraken.common.strings` module with the `as_bytes()` function"
 author = "@NiklasRosenstein"
 pr = "https://github.com/kraken-build/kraken-build/pull/51"
+
+[[entries]]
+id = "c31a7f01-67e8-43d9-8e17-3e1aac8e10e8"
+type = "feature"
+description = "add `one()` and `exactly_one()` function"
+author = "@NiklasRosenstein"
+pr = "https://github.com/kraken-build/kraken-build/pull/47"

@@ -7,7 +7,7 @@ from ._buildscript import BuildscriptMetadata, BuildscriptMetadataException, bui
 from ._date import datetime_to_iso8601, iso8601_to_datetime
 from ._environment import EnvironmentType
 from ._fs import atomic_file_swap, safe_rmpath
-from ._generic import NotSet, flatten, not_none
+from ._generic import NotSet, exactly_one, flatten, not_none, one
 from ._importlib import appending_to_sys_path, import_class
 from ._option_sets import LoggingOptions
 from ._requirements import LocalRequirement, PipRequirement, Requirement, RequirementSpec, parse_requirement
@@ -40,8 +40,10 @@ __all__ = [
     "atomic_file_swap",
     "safe_rmpath",
     # _generic
+    "exactly_one",
     "flatten",
     "not_none",
+    "one",
     "NotSet",
     # _importlib
     "import_class",

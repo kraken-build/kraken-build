@@ -1,0 +1,72 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "kraken-targets"
+version = "0.26.1"
+description = ""
+authors = ["Niklas Rosenstein <rosensteinniklas@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "kraken/targets", from = "src" }]
+classifiers = []
+keywords = []
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/kraken-build/kraken-targets/issues"
+Documentation = "https://kraken-build.github.io/kraken-targets/"
+Homepage = "https://kraken-build.github.io/kraken-targets/"
+Repository = "https://github.com/kraken-build/kraken-targets/"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+kraken-core = "~0.26.1"
+kraken-std = "~0.26.1"
+python-adjudicator = "^0.2.1"
+
+[tool.poetry.dev-dependencies]
+black = "*"
+flake8 = "*"
+isort = "*"
+mypy = "*"
+pycln = "^2.1.3"
+pytest = "*"
+databind = "^4.3.2"
+
+[tool.slap]
+typed = true
+
+[tool.slap.test]
+check  = "slap check"
+black  = "black --check src/ tests/"
+flake8 = "flake8 src/ tests/"
+isort  = "isort --check-only src/ tests/"
+mypy   = "dmypy run src/"
+pycln  = "pycln src/ tests/ --check"
+pytest = "pytest tests/ -vv"
+
+[tool.slap.run]
+fmt          = "pycln src/ tests/ && black src/ tests/ && isort src/ tests/"
+
+[tool.mypy]
+python_version = "3.10"
+explicit_package_bases = true
+mypy_path = ["src"]
+namespace_packages = true
+pretty = true
+show_error_codes = true
+show_error_context = true
+strict = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_unreachable = true
+warn_unused_ignores = true
+
+[tool.isort]
+profile = "black"
+line_length = 120
+combine_as_imports = true
+
+[tool.black]
+line-length = 120
