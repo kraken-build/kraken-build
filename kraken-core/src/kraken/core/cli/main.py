@@ -13,7 +13,7 @@ import textwrap
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, NoReturn, Optional
 
 from kraken.common import (
     BuildscriptMetadata,
@@ -612,22 +612,34 @@ def main_internal(prog: str, argv: list[str] | None, pdb_enabled: bool) -> NoRet
         graph_options = GraphOptions.collect(args)
 
         with contextlib.ExitStack() as exit_stack:
-            _context, graph = _load_build_state(
-                exit_stack=exit_stack,
-                build_options=build_options,
-                graph_options=graph_options,
-            )
+            optional_graph: Optional[TaskGraph] = None
+            try:
+                _, optional_graph = _load_build_state(
+                    exit_stack=exit_stack,
+                    build_options=build_options,
+                    graph_options=graph_options,
+                )
+            except ValueError as err:
+                print(
+                    colored(("> "), "magenta")
+                    + colored("Kraken has detected an error: " + str(err), "yellow", attrs=["bold"])
+                )
+                if err.__cause__ is not None:
+                    sys.excepthook(type(err.__cause__), err.__cause__, err.__cause__.__traceback__)
 
-            if args.query_cmd == "ls":
-                ls(graph)
-            elif args.query_cmd in ("describe", "d"):
-                describe(graph)
-            elif args.query_cmd in ("visualize", "viz", "v"):
-                visualize(graph, VizOptions.collect(args))
-            elif args.query_cmd in ("t", "tree"):
-                tree(graph, ExcludeOptions.collect(args))
-            else:
-                assert False, args.query_cmd
+            if optional_graph is not None:
+                graph: TaskGraph = optional_graph
+
+                if args.query_cmd == "ls":
+                    ls(graph)
+                elif args.query_cmd in ("describe", "d"):
+                    describe(graph)
+                elif args.query_cmd in ("visualize", "viz", "v"):
+                    visualize(graph, VizOptions.collect(args))
+                elif args.query_cmd in ("t", "tree"):
+                    tree(graph, ExcludeOptions.collect(args))
+                else:
+                    assert False, args.query_cmd
 
     else:
         parser.print_usage()

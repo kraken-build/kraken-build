@@ -101,3 +101,10 @@ type = "fix"
 description = "Fix `kraken query tree` command to remove the `--no-save` option and to never save the build context to disk after the command."
 author = "@NiklasRosenstein"
 pr = "https://github.com/kraken-build/kraken-build/pull/54"
+
+[[entries]]
+id = "4813b04f-daea-4e06-9864-e6085e62b3fa"
+type = "improvement"
+description = "Reduced stack-trace for common errors produced in main.py"
+author = "chris.cunningham@helsing.ai"
+pr = "https://github.com/kraken-build/kraken-build/pull/32"
