@@ -38,6 +38,7 @@ def start_mitmweb_proxy(auth: Mapping[str, tuple[str, str]], startup_wait_time: 
             str(inject_auth_addon_file),
             "--set",
             "auth=" + json.dumps(auth),
+            "--ssl-insecure",
         ],
         cwd=Path("~").expanduser(),
         stdout=daemon_log_file,

@@ -1,0 +1,6 @@
+[[entries]]
+id = "3f3c2ed3-3a86-42b2-a387-251c40b091bf"
+type = "fix"
+description = "Disable ssl check for mitm proxy"
+author = "luke.tomlin@helsing.ai"
+pr = "https://github.com/kraken-build/kraken-build/pull/69"
