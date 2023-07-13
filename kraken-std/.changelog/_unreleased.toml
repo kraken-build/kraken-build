@@ -1,0 +1,6 @@
+[[entries]]
+id = "400395ef-ae8c-4560-aa0f-922f1ff431bd"
+type = "feature"
+description = "Allows passing features to cargo_build."
+author = "@morosanmihail"
+pr = "https://github.com/kraken-build/kraken-build/pull/77"

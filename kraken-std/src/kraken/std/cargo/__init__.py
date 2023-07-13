@@ -298,6 +298,7 @@ def cargo_build(
     group: str | None = "build",
     name: str | None = None,
     project: Project | None = None,
+    features: list[str] | None = None,
 ) -> CargoBuildTask:
     """Creates a task that runs `cargo build`.
 
@@ -308,7 +309,7 @@ def cargo_build(
         variables in :attr:`CargoProject.build_env`.
     :param exclude: List of workspace crates to exclude from the build.
     :param name: The name of the task. If not specified, defaults to `:cargoBuild{mode.capitalised()}`.
-    :param version: Bump the Cargo.toml version temporarily while building to the given version."""
+    :param features: List of Cargo features to enable in the build."""
 
     assert mode in ("debug", "release"), repr(mode)
     project = project or Project.current()
@@ -322,6 +323,11 @@ def cargo_build(
         additional_args.append(crate)
     if mode == "release":
         additional_args.append("--release")
+    if features:
+        additional_args.append("--features")
+        # `cargo build` expects features to be comma separated, in one string.
+        # for example `cargo build --features abc,efg` instead of `cargo build --features abc efg`.
+        additional_args.append(",".join(features))
 
     task = project.task(f"cargoBuild{mode.capitalize()}" if name is None else name, CargoBuildTask, group=group)
     task.incremental = incremental
