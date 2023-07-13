@@ -1,0 +1,6 @@
+[[entries]]
+id = "a51a135c-ee4a-454a-9c4c-b548d2cace34"
+type = "feature"
+description = "Fix checked in poetry lock"
+author = "james.baker@helsing.ai"
+pr = "https://github.com/kraken-build/kraken-build/pull/78"
