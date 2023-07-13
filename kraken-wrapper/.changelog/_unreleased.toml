@@ -1,0 +1,13 @@
+[[entries]]
+id = "cc19919e-5c33-4632-86dd-4f00a8a11166"
+type = "improvement"
+description = "Expose all environment variables understood by `krakenw` as CLI options as well and document the variables in the `--help` text."
+author = "@NiklasRosenstein"
+pr = "https://github.com/kraken-build/kraken-build/pull/79"
+
+[[entries]]
+id = "d725edf0-9df0-4748-9ee9-c6c9cdd63be2"
+type = "feature"
+description = "Add `--show-install-logs` to the CLI and handle the `KRAKENW_SHOW_INSTALL_LOGS` env var."
+author = "@NiklasRosenstein"
+pr = "https://github.com/kraken-build/kraken-build/pull/79"

@@ -103,15 +103,3 @@ And with the `krakenw` CLI like this:
 If you want to stop `krakenw` from crawling up the directories until it finds the `.git` project's top level directory
 and the top-most Kraken build script, you can add `# ::krakenw-root` as a comment to the top of your build script in
 a sub-directory. This allows you to effectively treat a sub-directory as a separate Kraken project.
-
-
-## Environment variables
-
-Kraken wrapper supports the following environment variables:
-
-| Variable | Description |
-| -------- | ----------- |
-| `KRAKENW_USE` | If set, it will behave as if the `--use` flag was specified (although the `--use` flag if given will still take precedence over the environment variable). Can be used to enforce a certain type of build environment to use. Available values are `PEX_ZIPAPP`, `PEX_PACKED`, `PEX_LOOSE` and `VENV` (default). |
-| `KRAKENW_REINSTALL` | If set to `1`, behaves as if `--reinstall` was specified. |
-| `KRAKENW_INCREMENTAL` |  If set to `1`, virtual environment build environments are "incremental", i.e. they will be reused if they already exist and their installed distributions will be upgraded. |
-| `KRAKENW_NO_KEYRING` | If set to `1`, disable the use of the keyring package for storing credentials. |

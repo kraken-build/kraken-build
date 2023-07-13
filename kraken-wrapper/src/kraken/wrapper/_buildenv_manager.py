@@ -3,7 +3,6 @@ from __future__ import annotations
 import datetime
 import hashlib
 import logging
-import os
 import platform
 from pathlib import Path
 from urllib.parse import quote, urlparse, urlunparse
@@ -25,6 +24,8 @@ class BuildEnvManager:
         auth: AuthModel,
         default_type: EnvironmentType = EnvironmentType.VENV,
         default_hash_algorithm: str = "sha256",
+        incremental: bool = False,
+        show_install_logs: bool = False,
     ) -> None:
         assert (
             default_hash_algorithm in hashlib.algorithms_available
@@ -35,6 +36,8 @@ class BuildEnvManager:
         self._metadata_store = BuildEnvMetadataStore(path.parent / (path.name + ".meta"))
         self._default_type = default_type
         self._default_hash_algorithm = default_hash_algorithm
+        self._incremental = incremental
+        self._show_install_logs = show_install_logs
 
     def _inject_auth(self, url: str) -> str:
         parsed_url = urlparse(url)
@@ -51,11 +54,11 @@ class BuildEnvManager:
     def exists(self) -> bool:
         if self._metadata_store.get() is None:
             return False  # If we don't have metadata, we assume the environment does not exist.
-        return self.get_environment().get_path().exists()
+        return self.get_environment(None).get_path().exists()
 
     def remove(self) -> None:
         safe_rmpath(self._metadata_store.path)
-        safe_rmpath(self.get_environment().get_path())
+        safe_rmpath(self.get_environment(None).get_path())
 
     def install(
         self,
@@ -83,7 +86,7 @@ class BuildEnvManager:
             pythonpath=requirements.pythonpath,
         )
 
-        env = _get_environment_for_type(env_type, self._path)
+        env = self.get_environment(env_type)
         env.build(requirements, transitive)
         hash_algorithm = self.get_hash_algorithm()
         metadata = BuildEnvMetadata(
@@ -104,10 +107,11 @@ class BuildEnvManager:
         metadata = self._metadata_store.get()
         return metadata.hash_algorithm if metadata else self._default_hash_algorithm
 
-    def get_environment(self) -> BuildEnv:
-        metadata = self._metadata_store.get()
-        environment_type = self._default_type if metadata is None else metadata.environment_type
-        return _get_environment_for_type(environment_type, self._path)
+    def get_environment(self, env_type: EnvironmentType | None = None) -> BuildEnv:
+        if env_type is None:
+            metadata = self._metadata_store.get()
+            env_type = self._default_type if metadata is None else metadata.environment_type
+        return _get_environment_for_type(env_type, self._path, self._incremental, self._show_install_logs)
 
     def set_locked(self, lockfile: Lockfile) -> None:
         metadata = self._metadata_store.get()
@@ -121,15 +125,26 @@ class BuildEnvManager:
         self._metadata_store.set(metadata)
 
 
-def _get_environment_for_type(environment_type: EnvironmentType, base_path: Path) -> BuildEnv:
+def _get_environment_for_type(
+    environment_type: EnvironmentType, base_path: Path, incremental: bool, show_install_logs: bool
+) -> BuildEnv:
     platform_name = platform.system().lower()
     if platform_name != "windows":
         from ._buildenv_pex import PexBuildEnv
 
         if environment_type in PexBuildEnv.STYLES:
+            if incremental:
+                logger.warning("incremental installation mode not supported for Pex")
+            if show_install_logs:
+                # We could support it if we were to hide the install logs in the first place.
+                logger.warning("`show_install_logs` not supported for Pex")
             return PexBuildEnv(environment_type, base_path.parent / (base_path.name + ".pex"))
 
     if environment_type == EnvironmentType.VENV:
-        return VenvBuildEnv(base_path, incremental=os.getenv("KRAKENW_INCREMENTAL") == "1")
+        return VenvBuildEnv(
+            base_path,
+            incremental=incremental,
+            show_pip_logs=show_install_logs,
+        )
     else:
         raise RuntimeError(f"unsupported environment type {environment_type!r} on platform {platform_name!r}")

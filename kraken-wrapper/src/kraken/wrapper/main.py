@@ -131,9 +131,9 @@ def _get_auth_argument_parser(prog: str) -> argparse.ArgumentParser:
     return parser
 
 
-def auth(prog: str, argv: list[str]) -> NoReturn:
+def auth(prog: str, argv: list[str], use_keyring_if_available: bool) -> NoReturn:
     config = TomlConfigFile(DEFAULT_CONFIG_PATH)
-    auth = AuthModel(config, DEFAULT_CONFIG_PATH)
+    auth = AuthModel(config, DEFAULT_CONFIG_PATH, use_keyring_if_available=use_keyring_if_available)
     parser = _get_auth_argument_parser(prog)
     args = AuthOptions.collect(parser.parse_args(argv))
 
@@ -376,7 +376,7 @@ def main() -> NoReturn:
 
     if cmd in ("a", "auth"):
         # The `auth` comand does not require any current project information, it can be used globally.
-        auth(f"{parser.prog} auth", argv)
+        auth(f"{parser.prog} auth", argv, use_keyring_if_available=not env_options.no_keyring)
 
     if cmd in ("list-pythons",):
         list_pythons(f"{parser.prog} list-pythons", argv)
@@ -385,7 +385,12 @@ def main() -> NoReturn:
     # This includes the built-in `lock` command.
     config = TomlConfigFile(DEFAULT_CONFIG_PATH)
     project = load_project(Path.cwd(), outdated_check=not env_options.upgrade)
-    manager = BuildEnvManager(project.directory / BUILDENV_PATH, AuthModel(config, DEFAULT_CONFIG_PATH))
+    manager = BuildEnvManager(
+        project.directory / BUILDENV_PATH,
+        AuthModel(config, DEFAULT_CONFIG_PATH, use_keyring_if_available=not env_options.no_keyring),
+        incremental=env_options.incremental,
+        show_install_logs=env_options.show_install_logs,
+    )
 
     # Execute environment operations before delegating the command.
 
@@ -408,7 +413,7 @@ def main() -> NoReturn:
         _ensure_installed(
             manager,
             project,
-            env_options.reinstall or (os.getenv("KRAKENW_REINSTALL") == "1"),
+            env_options.reinstall,
             env_options.upgrade,
             env_options.use,
         )

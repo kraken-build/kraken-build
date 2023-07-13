@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import logging
 import os
 import shlex
 import subprocess
 import sys
+from contextlib import ExitStack
 from pathlib import Path
 from typing import List, NoReturn
 
@@ -35,32 +38,58 @@ class VenvBuildEnv(BuildEnv):
     Installs the Kraken build environment into a Python virtual environment.
     """
 
-    def __init__(self, path: Path, incremental: bool = False) -> None:
+    def __init__(self, path: Path, incremental: bool = False, show_pip_logs: bool = False) -> None:
         self._path = path
         self._venv = VirtualEnvInfo(self._path)
         self._incremental = incremental
+        self._show_pip_logs = show_pip_logs
 
     def _run_command(
-        self, command: List[str], operation_name: str, log_file: Path, mode: Literal["a", "w"] = "w"
+        self, command: List[str], operation_name: str, log_file: Path | None, mode: Literal["a", "w"] = "w"
     ) -> None:
-        log_file.parent.mkdir(parents=True, exist_ok=True)
-        with log_file.open(mode) as fp:
-            offset = fp.tell()
+        if log_file:
+            log_file.parent.mkdir(parents=True, exist_ok=True)
+
+        offset: int | None = None
+        exc: Exception | None = None
+
+        with ExitStack() as stack:
+            if log_file is not None:
+                fp = stack.enter_context(log_file.open(mode))
+                offset = fp.tell()
+            else:
+                fp = None
+                offset = 0
             try:
                 subprocess.check_call(command, stdout=fp, stderr=fp)
                 return
             except (subprocess.CalledProcessError, FileNotFoundError) as e:
                 exc = e
-        with log_file.open() as fp:
-            fp.seek(offset)
+
+        assert exc is not None
+        exit_code = exc.returncode if isinstance(exc, subprocess.CalledProcessError) else -1
+        command_str = "$ " + " ".join(map(shlex.quote, command))
+
+        if log_file:
+            assert offset is not None
+            with log_file.open() as fp:
+                fp.seek(offset)
+                logger.error(
+                    "'%s' failed (exit code: %d, command: %s). Output:\n\n%s",
+                    operation_name,
+                    exit_code,
+                    command_str,
+                    fp.read(),
+                )
+        else:
             logger.error(
-                "'%s' failed (exit code: %d, command: %s). Output:\n\n%s",
+                "'%s' failed (exit code: %d, command: %d). Check the output above for more information.",
                 operation_name,
                 exc.returncode if isinstance(exc, subprocess.CalledProcessError) else -1,
                 "$ " + " ".join(map(shlex.quote, command)),
-                fp.read(),
             )
-            raise BuildEnvError(f"The command {command} failed.") from exc
+
+        raise BuildEnvError(f"The command {command} failed.") from exc
 
     # BuildEnv
 
@@ -75,8 +104,11 @@ class VenvBuildEnv(BuildEnv):
         return general_get_installed_distributions([str(python), "-c", f"{KRAKEN_MAIN_IMPORT_SNIPPET}\nmain()"])
 
     def build(self, requirements: RequirementSpec, transitive: bool) -> None:
-        create_log = self._path.with_name(self._path.name + ".log") / "create.txt"
-        install_log = self._path.with_name(self._path.name + ".log") / "install.txt"
+        if self._show_pip_logs:
+            create_log: Path | None = self._path.with_name(self._path.name + ".log") / "create.txt"
+            install_log: Path | None = self._path.with_name(self._path.name + ".log") / "install.txt"
+        else:
+            create_log = install_log = None
 
         if not self._incremental and self._path.exists():
             logger.debug("Removing existing virtual environment at %s", self._path)

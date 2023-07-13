@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from pathlib import Path
 from typing import Any, MutableMapping, NamedTuple
 
@@ -32,10 +31,10 @@ class AuthModel:
         username: str
         password: str
 
-    def __init__(self, config: MutableMapping[str, Any], path: Path) -> None:
+    def __init__(self, config: MutableMapping[str, Any], path: Path, use_keyring_if_available: bool) -> None:
         self._config = config
         self._path = path
-        self._has_keyring = os.getenv("KRAKENW_NO_KEYRING") != "1" and not isinstance(
+        self._has_keyring = use_keyring_if_available and not isinstance(
             keyring.get_keyring(), (keyring.backends.fail.Keyring, keyring.backends.null.Keyring)
         )
 
